@@ -31,6 +31,7 @@
 
 (require 'subr-x)
 (require 'cl-lib)
+(require 'project)
 (eval-when-compile
   (require 'helm-source nil t))
 
@@ -156,15 +157,15 @@ An exception is \"GNUmakefile\", only GNU make understands it.")
 If it fails to do so, `1' will be returned.
 "
   (cond
-    ((member system-type '(gnu gnu/linux gnu/kfreebsd cygwin))
-     (if (executable-find "nproc")
-         (string-to-number (string-trim (shell-command-to-string "nproc")))
-       (warn "Can not retrieve available number of processing units, \"nproc\" not found")
-       1))
-    ;; What about the other systems '(darwin windows-nt aix berkeley-unix hpux usg-unix-v)?
-    (t
-     (warn "Retrieving available number of processing units not implemented for system-type %s" system-type)
-     1)))
+   ((member system-type '(gnu gnu/linux gnu/kfreebsd cygwin))
+    (if (executable-find "nproc")
+        (string-to-number (string-trim (shell-command-to-string "nproc")))
+      (warn "Can not retrieve available number of processing units, \"nproc\" not found")
+      1))
+   ;; What about the other systems '(darwin windows-nt aix berkeley-unix hpux usg-unix-v)?
+   (t
+    (warn "Retrieving available number of processing units not implemented for system-type %s" system-type)
+    1)))
 
 (defvar helm-make--last-item nil)
 
@@ -207,10 +208,10 @@ ninja.build file."
               ""
             (format "nice -n %d " helm-make-niceness))
           (cond
-            ((equal helm--make-build-system 'ninja)
-             helm-make-ninja-executable)
-            (t
-             helm-make-executable))
+           ((equal helm--make-build-system 'ninja)
+            helm-make-ninja-executable)
+           (t
+            helm-make-executable))
           (replace-regexp-in-string
            "^/\\(scp\\|ssh\\).+?:.+?:" ""
            (shell-quote-argument (file-name-directory file)))
@@ -325,10 +326,10 @@ If DIR-LIST is non-nil, also search for `helm-make-makefile-names' and
          (makefile (cl-find-if 'file-exists-p makefiles)))
     (when makefile
       (cond
-        ((string-match "build\.ninja$" makefile)
-         (setq helm--make-build-system 'ninja))
-        (t
-         (setq helm--make-build-system 'make))))
+       ((string-match "build\.ninja$" makefile)
+        (setq helm--make-build-system 'ninja))
+       (t
+        (setq helm--make-build-system 'make))))
     makefile))
 
 (defvar helm-make-db (make-hash-table :test 'equal)
@@ -350,20 +351,20 @@ and cache targets of MAKEFILE, if `helm-make-cache-targets' is t."
          (entry (gethash makefile helm-make-db nil))
          (new-entry (make-helm-make-dbfile))
          (targets (cond
-                    ((and helm-make-cache-targets
-                          entry
-                          (equal modtime (helm-make-dbfile-modtime entry))
-                          (helm-make-dbfile-targets entry))
-                     (helm-make-dbfile-targets entry))
-                    (t
-                     (delete-dups
-                      (cond
-                        ((equal helm--make-build-system 'ninja)
-                         (helm--make-target-list-ninja makefile))
-                        ((equal helm-make-list-target-method 'qp)
-                         (helm--make-target-list-qp makefile))
-                        (t
-                         (helm--make-target-list-default makefile))))))))
+                   ((and helm-make-cache-targets
+                         entry
+                         (equal modtime (helm-make-dbfile-modtime entry))
+                         (helm-make-dbfile-targets entry))
+                    (helm-make-dbfile-targets entry))
+                   (t
+                    (delete-dups
+                     (cond
+                      ((equal helm--make-build-system 'ninja)
+                       (helm--make-target-list-ninja makefile))
+                      ((equal helm-make-list-target-method 'qp)
+                       (helm--make-target-list-qp makefile))
+                      (t
+                       (helm--make-target-list-default makefile))))))))
     (when helm-make-sort-targets
       (unless (and helm-make-cache-targets
                    entry
@@ -458,13 +459,10 @@ setting the buffer local variable `helm-make-build-dir'."
       (setq helm-make-command (helm--make-construct-command arg makefile))
       (helm--make makefile))))
 
-(defvar project-roots)
-
 (defun helm-make-project-directory ()
   "Return the current project root directory if found."
-  (if (and (fboundp 'project-current) (project-current))
-      (car (project-roots (project-current)))
-    nil))
+  (when-let ((proj (project-current)))
+    (project-root proj)))
 
 (defun helm-make-current-directory()
   "Return the current directory."
