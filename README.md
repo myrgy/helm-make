@@ -13,6 +13,27 @@ The functions that this package provides are auto-loaded, so no
 additional setup is required. Unless you want to bind the functions to
 a key.
 
+### Configuration
+
+Plays really well with helm-ctest and any CMake-base project via `.dir-locals.el`
+
+``` lisp
+((nil
+  (eval setq
+        projectile-project-test-cmd #'helm-ctest
+        projectile-project-compilation-cmd #'helm-make-projectile
+        projectile-project-compilation-dir "build"
+        helm-make-build-dir (projectile-compilation-dir)
+        helm-ctest-dir (projectile-compilation-dir))
+
+    (projectile-project-configure-cmd . "env CLICOLOR_FORCE=1 cmake \
+                                           -DCMAKE_BUILD_TYPE=Debug \
+                                           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+                                           ..")
+    (helm-make-arguments . "-j15")
+   ))
+```
+
 ### Additional stuff
 
 #### `helm-make-do-save`
